@@ -1,9 +1,46 @@
-r_main_bigmemory <- function(){
+r_main_bigmemory <- function(dat, alpha, tau, rho, lambda, M){
+
+  n <- nrow(dat)
+  p <- ncol(dat) - 1
+
+  rhon <- rho/n
+  lambdan <- lambda/n
+
+  dat_bm <- bigmemory::as.big.matrix(dat)
+
+  dat_desc <- describe(dat_bm)
+
+  inverse_bm <- big.matrix(nrow = M*p, ncol = p, type = 'double', init = 0)
+
+  foreach(i = 1:M)%dopar%{
+    dat_indices <- ((i - 1)*M + 1):(i*M)
+    inverse_bm[((i - 1)*p + 1):(i*p), ] <- solve(crossprod(dat[dat_indices, -1] + diag(1, nrow = p)))
+    NULL
+
+  }
+
+  inverse_desc <- describe(inverse_bm)
+
+  constraint_bm <- big.matrix(nrow = n, ncol = 2)
+
+  constraint_desc <- describe(constrain_bm)
+
+  beta_bm <- big.matrix(nrow = p, ncol = M)
+
+  beta_desc <- describe(beta_bm)
+
+  eta_bm <- big.matrix(nrow = p, ncol = M)
+
+  eta_desc <- describe(eta_bm)
+
+ foreach(index = 1:M)%dopar%{
+
+  worker_bigmemory(dat_desc, inverse_desc, constraint_desc, beta_desc,
+  eta_desc, i = index)
 
 
 
-
-
+ }
 
 }
 
